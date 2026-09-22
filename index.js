@@ -15,6 +15,7 @@ const AUTH_TOKEN = PIN ? crypto.createHash('sha256').update(PIN).digest('hex') :
 
 let textoGuardado = '';
 
+app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
@@ -56,11 +57,38 @@ app.get('/', (req, res) => {
     <html>
       <body style="font-family: sans-serif; max-width: 700px; margin: 40px auto;">
         <h3>Portapapeles compartido</h3>
-        <form method="POST" action="/guardar">
-          <textarea name="texto" rows="15" style="width: 100%; font-size: 16px;" autofocus>${textoGuardado}</textarea>
-          <br /><br />
-          <button type="submit">Guardar</button>
-        </form>
+        <textarea id="texto" rows="15" style="width: 100%; font-size: 16px;" autofocus>${textoGuardado}</textarea>
+        <br /><br />
+        <button id="guardar">Guardar</button>
+        <span id="estado" style="margin-left: 10px; color: gray;"></span>
+
+        <script>
+          const textarea = document.getElementById('texto');
+          const boton = document.getElementById('guardar');
+          const estado = document.getElementById('estado');
+
+          async function guardar() {
+            await fetch('/guardar', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ texto: textarea.value })
+            });
+            estado.textContent = 'Guardado';
+            setTimeout(() => estado.textContent = '', 2000);
+          }
+
+          async function refrescar() {
+            if (document.activeElement === textarea) return;
+            const res = await fetch('/texto');
+            const datos = await res.json();
+            if (datos.texto !== textarea.value) {
+              textarea.value = datos.texto;
+            }
+          }
+
+          boton.addEventListener('click', guardar);
+          setInterval(refrescar, 3000);
+        </script>
       </body>
     </html>
   `);
@@ -68,10 +96,17 @@ app.get('/', (req, res) => {
 
 app.post('/guardar', (req, res) => {
   if (!estaAutenticado(req)) {
-    return res.redirect('/login');
+    return res.status(401).json({ error: 'no autenticado' });
   }
   textoGuardado = req.body.texto || '';
-  res.redirect('/');
+  res.json({ ok: true });
+});
+
+app.get('/texto', (req, res) => {
+  if (!estaAutenticado(req)) {
+    return res.status(401).json({ error: 'no autenticado' });
+  }
+  res.json({ texto: textoGuardado });
 });
 
 app.listen(PORT, () => {
