@@ -32,14 +32,131 @@ function estaAutenticado(req) {
   return AUTH_TOKEN && req.cookies[COOKIE_NAME] === AUTH_TOKEN;
 }
 
+const estilos = `
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(180deg, #1a1d29 0%, #0f1117 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      color: #e8e9ed;
+    }
+    .app {
+      width: 100%;
+      max-width: 460px;
+      padding: 24px 16px 40px;
+    }
+    .card {
+      background: #1e2130;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      border: 1px solid #2a2e42;
+    }
+    h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0 0 4px;
+      color: #fff;
+    }
+    .subtitulo {
+      font-size: 13px;
+      color: #8b8fa3;
+      margin: 0 0 16px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      background: #14161f;
+      color: #e8e9ed;
+      border: 1px solid #2a2e42;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 16px;
+      line-height: 1.4;
+      resize: vertical;
+      outline: none;
+    }
+    textarea:focus {
+      border-color: #5b6bf5;
+    }
+    .botones {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    button {
+      flex: 1;
+      border: none;
+      border-radius: 12px;
+      padding: 13px 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s ease, opacity 0.2s ease;
+    }
+    button:active { transform: scale(0.97); }
+    .btn-primario {
+      background: #5b6bf5;
+      color: #fff;
+    }
+    .btn-secundario {
+      background: #2a2e42;
+      color: #e8e9ed;
+    }
+    .estado {
+      display: block;
+      text-align: center;
+      margin-top: 12px;
+      font-size: 13px;
+      color: #6ee7a0;
+      min-height: 16px;
+    }
+    .login-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      width: 100%;
+    }
+    input[type="password"] {
+      width: 100%;
+      background: #14161f;
+      color: #fff;
+      border: 1px solid #2a2e42;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 18px;
+      text-align: center;
+      letter-spacing: 4px;
+      outline: none;
+      margin-bottom: 14px;
+    }
+    input[type="password"]:focus { border-color: #5b6bf5; }
+    .error { color: #f66; font-size: 13px; text-align: center; margin-top: 10px; }
+  </style>
+`;
+
 app.get('/login', (req, res) => {
   res.send(`
     <html>
-      <body style="font-family: sans-serif; display: flex; justify-content: center; margin-top: 100px;">
-        <form method="POST" action="/login">
-          <input type="password" name="pin" placeholder="PIN" autofocus />
-          <button type="submit">Entrar</button>
-        </form>
+      <head>${estilos}</head>
+      <body>
+        <div class="login-wrap">
+          <div class="app">
+            <div class="card">
+              <h1>Portapapeles compartido</h1>
+              <p class="subtitulo">Ingresa tu PIN para continuar</p>
+              <form method="POST" action="/login">
+                <input type="password" name="pin" placeholder="••••" autofocus />
+                <button type="submit" class="btn-primario" style="width:100%;">Entrar</button>
+              </form>
+            </div>
+          </div>
+        </div>
       </body>
     </html>
   `);
@@ -55,7 +172,26 @@ app.post('/login', (req, res) => {
     });
     return res.redirect('/');
   }
-  res.send('PIN incorrecto. <a href="/login">Volver a intentar</a>');
+  res.send(`
+    <html>
+      <head>${estilos}</head>
+      <body>
+        <div class="login-wrap">
+          <div class="app">
+            <div class="card">
+              <h1>Portapapeles compartido</h1>
+              <p class="subtitulo">Ingresa tu PIN para continuar</p>
+              <form method="POST" action="/login">
+                <input type="password" name="pin" placeholder="••••" autofocus />
+                <button type="submit" class="btn-primario" style="width:100%;">Entrar</button>
+              </form>
+              <p class="error">PIN incorrecto</p>
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `);
 });
 
 app.get('/', (req, res) => {
@@ -64,20 +200,36 @@ app.get('/', (req, res) => {
   }
   res.send(`
     <html>
-      <body style="font-family: sans-serif; max-width: 700px; margin: 40px auto;">
-        <h3>Portapapeles compartido</h3>
-        <textarea id="texto" rows="15" style="width: 100%; font-size: 16px;" autofocus>${textoGuardado}</textarea>
-        <br /><br />
-        <span id="estado" style="color: gray;"></span>
+      <head>${estilos}</head>
+      <body>
+        <div class="app">
+          <div class="card">
+            <h1>Portapapeles compartido</h1>
+            <p class="subtitulo">Se guarda solo mientras escribes</p>
+            <textarea id="texto" autofocus>${textoGuardado}</textarea>
+            <div class="botones">
+              <button class="btn-secundario" id="seleccionar">Seleccionar todo</button>
+              <button class="btn-primario" id="copiar">Copiar</button>
+            </div>
+            <span id="estado" class="estado"></span>
+          </div>
+        </div>
 
         <script>
           const textarea = document.getElementById('texto');
           const estado = document.getElementById('estado');
+          const btnSeleccionar = document.getElementById('seleccionar');
+          const btnCopiar = document.getElementById('copiar');
 
           let ultimoTextoEnviado = textarea.value;
           let escribiendo = false;
           let timerGuardado = null;
           let timerEscribiendo = null;
+
+          function mostrarEstado(msg) {
+            estado.textContent = msg;
+            setTimeout(() => { estado.textContent = ''; }, 1500);
+          }
 
           async function guardar() {
             const valor = textarea.value;
@@ -88,8 +240,7 @@ app.get('/', (req, res) => {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ texto: valor })
             });
-            estado.textContent = 'Guardado';
-            setTimeout(() => estado.textContent = '', 1500);
+            mostrarEstado('Guardado');
           }
 
           textarea.addEventListener('input', () => {
@@ -109,6 +260,21 @@ app.get('/', (req, res) => {
               textarea.value = datos.texto;
             }
           }
+
+          btnSeleccionar.addEventListener('click', () => {
+            textarea.focus();
+            textarea.select();
+          });
+
+          btnCopiar.addEventListener('click', async () => {
+            textarea.select();
+            try {
+              await navigator.clipboard.writeText(textarea.value);
+            } catch (e) {
+              document.execCommand('copy');
+            }
+            mostrarEstado('Copiado');
+          });
 
           setInterval(refrescar, 2000);
         </script>
