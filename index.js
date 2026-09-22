@@ -6,6 +6,7 @@ const app = express();
 const PORT = process.env.PORT || 3002;
 const PIN = process.env.CLIPBOARD_PIN;
 const COOKIE_NAME = 'clipboard_auth';
+const MINUTOS_EXPIRACION = 5;
 
 if (!PIN) {
   console.error('Falta configurar la variable de entorno CLIPBOARD_PIN');
@@ -14,6 +15,14 @@ if (!PIN) {
 const AUTH_TOKEN = PIN ? crypto.createHash('sha256').update(PIN).digest('hex') : null;
 
 let textoGuardado = '';
+let timerExpiracion = null;
+
+function reiniciarExpiracion() {
+  if (timerExpiracion) clearTimeout(timerExpiracion);
+  timerExpiracion = setTimeout(() => {
+    textoGuardado = '';
+  }, MINUTOS_EXPIRACION * 60 * 1000);
+}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -113,6 +122,7 @@ app.post('/guardar', (req, res) => {
     return res.status(401).json({ error: 'no autenticado' });
   }
   textoGuardado = req.body.texto || '';
+  reiniciarExpiracion();
   res.json({ ok: true });
 });
 
