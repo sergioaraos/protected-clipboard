@@ -1,9 +1,56 @@
 const express = require('express');
+const cookieParser = require('cookie-parser');
+const crypto = require('crypto');
+
 const app = express();
-const PORT = process.env.PORT || 3020;
+const PORT = process.env.PORT || 3002;
+const PIN = process.env.CLIPBOARD_PIN;
+const COOKIE_NAME = 'clipboard_auth';
+
+if (!PIN) {
+  console.error('Falta configurar la variable de entorno CLIPBOARD_PIN');
+}
+
+const AUTH_TOKEN = PIN ? crypto.createHash('sha256').update(PIN).digest('hex') : null;
+
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+
+function estaAutenticado(req) {
+  return AUTH_TOKEN && req.cookies[COOKIE_NAME] === AUTH_TOKEN;
+}
+
+app.get('/login', (req, res) => {
+  res.send(`
+    <html>
+      <body style="font-family: sans-serif; display: flex; justify-content: center; margin-top: 100px;">
+        <form method="POST" action="/login">
+          <input type="password" name="pin" placeholder="PIN" autofocus />
+          <button type="submit">Entrar</button>
+        </form>
+      </body>
+    </html>
+  `);
+});
+
+app.post('/login', (req, res) => {
+  if (PIN && req.body.pin === PIN) {
+    res.cookie(COOKIE_NAME, AUTH_TOKEN, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      maxAge: 1000 * 60 * 60 * 24 * 30
+    });
+    return res.redirect('/');
+  }
+  res.send('PIN incorrecto. <a href="/login">Volver a intentar</a>');
+});
 
 app.get('/', (req, res) => {
-  res.send('Hola mundo, protected-clipboard funcionando');
+  if (!estaAutenticado(req)) {
+    return res.redirect('/login');
+  }
+  res.send('Hola mundo, protected-clipboard funcionando (autenticado)');
 });
 
 app.listen(PORT, () => {
