@@ -13,6 +13,8 @@ if (!PIN) {
 
 const AUTH_TOKEN = PIN ? crypto.createHash('sha256').update(PIN).digest('hex') : null;
 
+let textoGuardado = '';
+
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
@@ -50,7 +52,26 @@ app.get('/', (req, res) => {
   if (!estaAutenticado(req)) {
     return res.redirect('/login');
   }
-  res.send('Hola mundo, protected-clipboard funcionando (autenticado)');
+  res.send(`
+    <html>
+      <body style="font-family: sans-serif; max-width: 700px; margin: 40px auto;">
+        <h3>Portapapeles compartido</h3>
+        <form method="POST" action="/guardar">
+          <textarea name="texto" rows="15" style="width: 100%; font-size: 16px;" autofocus>${textoGuardado}</textarea>
+          <br /><br />
+          <button type="submit">Guardar</button>
+        </form>
+      </body>
+    </html>
+  `);
+});
+
+app.post('/guardar', (req, res) => {
+  if (!estaAutenticado(req)) {
+    return res.redirect('/login');
+  }
+  textoGuardado = req.body.texto || '';
+  res.redirect('/');
 });
 
 app.listen(PORT, () => {
