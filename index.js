@@ -59,35 +59,49 @@ app.get('/', (req, res) => {
         <h3>Portapapeles compartido</h3>
         <textarea id="texto" rows="15" style="width: 100%; font-size: 16px;" autofocus>${textoGuardado}</textarea>
         <br /><br />
-        <button id="guardar">Guardar</button>
-        <span id="estado" style="margin-left: 10px; color: gray;"></span>
+        <span id="estado" style="color: gray;"></span>
 
         <script>
           const textarea = document.getElementById('texto');
-          const boton = document.getElementById('guardar');
           const estado = document.getElementById('estado');
 
+          let ultimoTextoEnviado = textarea.value;
+          let escribiendo = false;
+          let timerGuardado = null;
+          let timerEscribiendo = null;
+
           async function guardar() {
+            const valor = textarea.value;
+            if (valor === ultimoTextoEnviado) return;
+            ultimoTextoEnviado = valor;
             await fetch('/guardar', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ texto: textarea.value })
+              body: JSON.stringify({ texto: valor })
             });
             estado.textContent = 'Guardado';
-            setTimeout(() => estado.textContent = '', 2000);
+            setTimeout(() => estado.textContent = '', 1500);
           }
 
+          textarea.addEventListener('input', () => {
+            escribiendo = true;
+            clearTimeout(timerEscribiendo);
+            clearTimeout(timerGuardado);
+            timerGuardado = setTimeout(guardar, 800);
+            timerEscribiendo = setTimeout(() => { escribiendo = false; }, 1500);
+          });
+
           async function refrescar() {
-            if (document.activeElement === textarea) return;
+            if (escribiendo) return;
             const res = await fetch('/texto');
             const datos = await res.json();
-            if (datos.texto !== textarea.value) {
+            if (datos.texto !== ultimoTextoEnviado) {
+              ultimoTextoEnviado = datos.texto;
               textarea.value = datos.texto;
             }
           }
 
-          boton.addEventListener('click', guardar);
-          setInterval(refrescar, 3000);
+          setInterval(refrescar, 2000);
         </script>
       </body>
     </html>
