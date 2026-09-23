@@ -171,7 +171,7 @@ const estilos = `
 app.get('/login', (req, res) => {
   res.send(`
     <html>
-      <head>${estilos}</head>
+      <head><meta name="viewport" content="width=device-width, initial-scale=1" />${estilos}</head>
       <body>
         <div class="login-wrap">
           <div class="app">
@@ -202,7 +202,7 @@ app.post('/login', (req, res) => {
   }
   res.send(`
     <html>
-      <head>${estilos}</head>
+      <head><meta name="viewport" content="width=device-width, initial-scale=1" />${estilos}</head>
       <body>
         <div class="login-wrap">
           <div class="app">
@@ -228,7 +228,7 @@ app.get('/', (req, res) => {
   }
   res.send(`
     <html>
-      <head>${estilos}</head>
+      <head><meta name="viewport" content="width=device-width, initial-scale=1" />${estilos}</head>
       <body>
         <div class="app">
           <div class="card">
